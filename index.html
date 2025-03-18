@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Jotocho - Marcador</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div class="container">
+    <h1>Jotocho - Marcador de Juego</h1>
+    <div id="playerForm">
+      <label for="numPlayers">Número de Jugadores:</label>
+      <input type="number" id="numPlayers" min="2" max="6" placeholder="Selecciona el número de jugadores">
+      <button onclick="setupPlayers()">Registrar Jugadores</button>
+    </div>
+    
+    <div id="playerNames" style="display: none;">
+      <h2>Registrar Nombres</h2>
+      <div id="nameInputs"></div>
+      <button onclick="startGame()">Iniciar Juego</button>
+    </div>
+
+    <div id="gameArea" style="display: none;">
+      <h2>Juego en Curso</h2>
+      <div id="scores">
+        <!-- Aquí se mostrarán los puntajes -->
+      </div>
+      <div id="eliminationMessage"></div>
+    </div>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>
