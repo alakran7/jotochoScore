@@ -3,31 +3,75 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Jotocho - Marcador</title>
-  <link rel="stylesheet" href="style.css">
+  <title>Juego Jotocho</title>
+  <style>
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 20px;
+    }
+    table, th, td {
+      border: 1px solid black;
+    }
+    th, td {
+      padding: 10px;
+      text-align: center;
+    }
+    .eliminado {
+      background-color: #ffcccc;
+    }
+    .total {
+      font-weight: bold;
+    }
+    #errorMessage {
+      color: red;
+      font-size: 16px;
+      display: none;
+    }
+  </style>
 </head>
 <body>
-  <div class="container">
-    <h1>Jotocho - Marcador de Juego</h1>
-    <div id="playerForm">
-      <label for="numPlayers">Número de Jugadores:</label>
-      <input type="number" id="numPlayers" min="2" max="6" placeholder="Selecciona el número de jugadores">
-      <button onclick="setupPlayers()">Registrar Jugadores</button>
+
+  <div id="gameArea">
+    <h3>Marcador del Juego Jotocho</h3>
+
+    <!-- Selección de jugadores -->
+    <div>
+      <label for="numPlayers">Selecciona el número de jugadores:</label>
+      <input type="number" id="numPlayers" min="2" value="2" onchange="initializePlayers()">
     </div>
-    
+
     <div id="playerNames" style="display: none;">
-      <h2>Registrar Nombres</h2>
+      <h4>Registra los nombres de los jugadores:</h4>
       <div id="nameInputs"></div>
       <button onclick="startGame()">Iniciar Juego</button>
     </div>
+	
+	
+	
 
-    <div id="gameArea" style="display: none;">
-      <h2>Juego en Curso</h2>
-      <div id="scores">
-        <!-- Aquí se mostrarán los puntajes -->
-      </div>
-      <div id="eliminationMessage"></div>
-    </div>
+    <div id="errorMessage"></div>
+
+<div id="scoreSection" style="display: none;">
+  <table id="scoreTable">
+    <thead>
+      <tr>
+        <th>Partida</th>
+        <!-- Los nombres de los jugadores serán dinámicamente insertados -->
+      </tr>
+    </thead>
+    <tbody>
+      <!-- Las filas de puntajes se agregarán dinámicamente -->
+    </tbody>
+  </table>
+
+  <div id="scoreInputs"></div> <!-- Se agregará un campo para cada jugador -->
+  <button onclick="addScore()">Agregar Puntaje</button>
+  <button onclick="resetGame()" id="resetButton" style="display: none;">Reiniciar Juego</button>
+  
+  
+</div>
+
   </div>
 
   <script src="app.js"></script>
