@@ -1,79 +1,567 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Juego Jotocho</title>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Jotocho Score</title>
+  <link rel="manifest" href="manifest.json" />
+  <meta name="theme-color" content="#2d6cdf" />
+  <link rel="icon" type="image/png" href="icons/favicon-96x96.png" sizes="96x96" />
+  <link rel="icon" type="image/svg+xml" href="icons/favicon.svg" />
+  <link rel="shortcut icon" href="icons/favicon.ico" />
+  <link rel="apple-touch-icon" sizes="180x180" href="icons/apple-touch-icon.png" />
+  <meta name="apple-mobile-web-app-title" content="Jotocho" />
+  <link rel="manifest" href="/manifest.json" />
   <style>
-    table {
-      width: 100%;
-      border-collapse: collapse;
-      margin-top: 20px;
+    body {
+      font-family: Arial, sans-serif;
+      background: #f4f7fa;
+      color: #222;
+      margin: 0;
+      padding: 0;
     }
-    table, th, td {
-      border: 1px solid black;
+    .container {
+      max-width: 900px;
+      margin: 30px auto;
+      background: #fff;
+      border-radius: 14px;
+      box-shadow: 0 4px 18px rgba(0, 0, 0, 0.07);
+      padding: 32px 28px;
     }
-    th, td {
-      padding: 10px;
+    h2 {
+      font-size: 2em;
+      font-weight: 700;
+      color: #2d6cdf;
+      margin-bottom: 18px;
       text-align: center;
     }
-    .eliminado {
-      background-color: #ffcccc;
+    .hidden {
+      display: none !important;
     }
-    .total {
+    .table-wrapper {
+      overflow-x: auto;
+      -webkit-overflow-scrolling: touch;
+    }
+    table {
+      border-collapse: collapse;
+      width: 100%;
+      min-width: 600px;
+    }
+    th, td {
+      padding: 10px 8px;
+      border: 1px solid #ddd;
+      text-align: center;
+      white-space: nowrap;
+      position: relative;
+    }
+    th {
+      background: #eaf1fb;
+      font-weight: 700;
+      position: sticky;
+      top: 0;
+      z-index: 1;
+    }
+    th:first-child, td:first-child {
+      position: sticky;
+      left: 0;
+      background: #fff;
+      z-index: 2;
+      box-shadow: 2px 0 5px -2px rgba(0,0,0,0.1);
+      text-align: left;
+      padding-left: 12px;
+    }
+    th:first-child {
+      z-index: 3;
+    }
+    tbody tr:nth-child(even) td {
+      background: #f9f9f9;
+    }
+    tbody tr:hover td {
+      background: #d8e6fa;
+    }
+    input[type="number"],
+    input[type="text"],
+    select {
+      border: 1px solid #bfc9d6;
+      border-radius: 6px;
+      padding: 8px;
+      font-size: 1em;
+      margin-bottom: 8px;
+      width: 100%;
+      box-sizing: border-box;
+    }
+    button {
+      background: #2d6cdf;
+      color: #fff;
+      border: none;
+      border-radius: 6px;
+      padding: 10px 22px;
+      font-size: 1em;
+      margin: 6px 4px 0 0;
+      cursor: pointer;
+      transition: background 0.2s;
+      box-shadow: 0 2px 8px rgba(45, 108, 223, 0.06);
+    }
+    button:hover {
+      background: #174fa3;
+    }
+    button.cancel {
+      background: #f44336;
+    }
+    button.cancel:hover {
+      background: #b71c1c;
+    }
+    .form-group {
+      margin-bottom: 18px;
+    }
+    .button-group {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-top: 12px;
+      justify-content: flex-start;
+    }
+    .button-group button {
+      flex: 1 1 120px;
+      min-width: 0;
+    }
+    @media (max-width: 600px) {
+      .button-group {
+        flex-direction: column;
+        gap: 10px;
+      }
+      .button-group button {
+        width: 100%;
+        flex: unset;
+        margin: 0;
+      }
+    }
+    /* Jugador fuera */
+    .player-lost {
+      color: #dc3545 !important;
+      background: #ffe5e5 !important;
+      text-decoration: line-through;
+    }
+    /* Jugador con trofeo */
+    .player-winner {
+      color: #1e7e34 !important;
+      background: #d4edda !important;
       font-weight: bold;
     }
-    #errorMessage {
-      color: red;
-      font-size: 16px;
-      display: none;
+    td.player-lost::after {
+      content: " ❌";
+      font-weight: 700;
+    }
+    td.player-winner::after {
+      content: " 🏆";
+      font-weight: 700;
     }
   </style>
 </head>
 <body>
 
-  <div id="gameArea">
-    <h3>Marcador del Juego Jotocho</h3>
-
-    <!-- Selección de jugadores -->
-    <div>
-      <label for="numPlayers">Selecciona el número de jugadores:</label>
-      <input type="number" id="numPlayers" min="2" value="2" onchange="initializePlayers()">
+  <!-- Pantalla 0: Configuración límite puntos -->
+  <div class="container" id="screen0">
+    <h2>Configuración del Juego</h2>
+    <div class="form-group">
+      <label for="maxPoints">Puntos máximos para quedar fuera:</label>
+      <input type="number" id="maxPoints" min="1" value="100" />
     </div>
-
-    <div id="playerNames" style="display: none;">
-      <h4>Registra los nombres de los jugadores:</h4>
-      <div id="nameInputs"></div>
-      <button onclick="startGame()">Iniciar Juego</button>
-    </div>
-	
-	
-	
-
-    <div id="errorMessage"></div>
-
-<div id="scoreSection" style="display: none;">
-  <table id="scoreTable">
-    <thead>
-      <tr>
-        <th>Partida</th>
-        <!-- Los nombres de los jugadores serán dinámicamente insertados -->
-      </tr>
-    </thead>
-    <tbody>
-      <!-- Las filas de puntajes se agregarán dinámicamente -->
-    </tbody>
-  </table>
-
-  <div id="scoreInputs"></div> <!-- Se agregará un campo para cada jugador -->
-  <button onclick="addScore()">Agregar Puntaje</button>
-  <button onclick="resetGame()" id="resetButton" style="display: none;">Reiniciar Juego</button>
-  
-  
-</div>
-
+    <button onclick="goToPlayers()">Continuar ➔</button>
   </div>
 
-  <script src="app.js"></script>
+  <!-- Pantalla 1: Número de jugadores -->
+  <div class="container hidden" id="screen1">
+    <h2>Jotocho Score</h2>
+    <div class="form-group">
+      <label>¿Cuántos jugadores?</label>
+      <input type="number" id="numPlayers" min="2" max="10" />
+    </div>
+    <button onclick="goToNames()">Next ➔</button>
+  </div>
+
+  <!-- Pantalla 2: Nombres -->
+  <div class="container hidden" id="screen2">
+    <h2>Jotocho Score</h2>
+    <form id="namesForm"></form>
+    <button onclick="backToPlayers()" class="cancel">⟵ Back</button>
+    <button onclick="goToScoreboard()">Next ➔</button>
+  </div>
+
+  <!-- Pantalla 3: Scoreboard -->
+  <div class="container hidden" id="screen3">
+    <h2>Jotocho Score</h2>
+    <div class="table-wrapper">
+      <div id="scoreboard"></div>
+    </div>
+    <div class="button-group">
+      <button onclick="editRound()">Editar</button>
+      <button id="btnAddRound" onclick="addRound()">Agregar Ronda</button>
+      <button onclick="newGame()" class="cancel">Nuevo Juego</button>
+    </div>
+  </div>
+
+  <!-- Pantalla 4: Editar o agregar ronda -->
+  <div class="container hidden" id="screen4">
+    <h2>Editar Puntajes</h2>
+    <label for="roundSelector" id="roundSelectorLabel" style="display:none;">Seleccionar Ronda:</label>
+    <select id="roundSelector" onchange="loadRoundData()" style="display:none;"></select>
+
+    <div id="roundNumberContainer" style="margin-bottom: 15px; font-weight: bold; font-size: 1.2em; display:none;">
+      Ronda # <span id="roundNumber"></span>
+    </div>
+
+    <form id="roundForm" class="edit-form"></form>
+    <button class="cancel" onclick="cancelRound()">Cancelar</button>
+    <button onclick="saveRound()">Guardar</button>
+  </div>
+
+  <script>
+    let numPlayers = 0;
+    let playerNames = [];
+    let scores = [];
+    let editingRound = null;
+    let maxPoints = 100;
+    let playersStatus = []; // 'active' | 'lost'
+
+    // Guardar datos en localStorage
+    function saveData() {
+      localStorage.setItem('jotocho_numPlayers', numPlayers);
+      localStorage.setItem('jotocho_playerNames', JSON.stringify(playerNames));
+      localStorage.setItem('jotocho_scores', JSON.stringify(scores));
+      localStorage.setItem('jotocho_maxPoints', maxPoints);
+      localStorage.setItem('jotocho_playersStatus', JSON.stringify(playersStatus));
+    }
+
+    // Cargar datos de localStorage
+    function loadData() {
+      const np = localStorage.getItem('jotocho_numPlayers');
+      const pn = localStorage.getItem('jotocho_playerNames');
+      const sc = localStorage.getItem('jotocho_scores');
+      const mp = localStorage.getItem('jotocho_maxPoints');
+      const ps = localStorage.getItem('jotocho_playersStatus');
+
+      if (np && pn && sc && mp && ps) {
+        numPlayers = parseInt(np);
+        playerNames = JSON.parse(pn);
+        scores = JSON.parse(sc);
+        maxPoints = parseInt(mp);
+        playersStatus = JSON.parse(ps);
+        showScreen(3);
+        renderScoreboard();
+        updateAddRoundButton();
+      } else {
+        showScreen(0);
+      }
+    }
+
+    function newGame() {
+      if (confirm('¿Seguro que quieres empezar un nuevo juego? Se perderán los datos actuales.')) {
+        localStorage.clear();
+        numPlayers = 0;
+        playerNames = [];
+        scores = [];
+        maxPoints = 100;
+        playersStatus = [];
+        showScreen(0);
+      }
+    }
+
+    function goToPlayers() {
+      maxPoints = parseInt(document.getElementById('maxPoints').value);
+      if (!maxPoints || maxPoints < 1) {
+        alert('Por favor ingresa un límite de puntos válido (mayor que 0).');
+        return;
+      }
+      localStorage.setItem('jotocho_maxPoints', maxPoints);
+      showScreen(1);
+    }
+
+    function goToNames() {
+      numPlayers = parseInt(document.getElementById('numPlayers').value);
+      if (!numPlayers || numPlayers < 2) {
+        alert('Por favor ingresa al menos 2 jugadores.');
+        return;
+      }
+      let form = document.getElementById('namesForm');
+      form.innerHTML = '';
+      for (let i = 0; i < numPlayers; i++) {
+        form.innerHTML += `<div class="form-group">
+          <label>Jugador ${i + 1}:</label>
+          <input type="text" id="player${i}" required />
+        </div>`;
+      }
+      showScreen(2);
+    }
+
+    function backToPlayers() {
+      showScreen(1);
+    }
+
+    function goToScoreboard() {
+      playerNames = [];
+      for (let i = 0; i < numPlayers; i++) {
+        let name = document.getElementById(`player${i}`).value.trim();
+        if (!name) name = `Jugador ${i + 1}`;
+        playerNames.push(name);
+      }
+      playersStatus = Array(numPlayers).fill('active');
+      saveData();
+      renderScoreboard();
+      updateAddRoundButton();
+      showScreen(3);
+    }
+
+    function showScreen(n) {
+      for (let i = 0; i <= 4; i++) {
+        const screen = document.getElementById('screen' + i);
+        if (screen) screen.classList.add('hidden');
+      }
+      document.getElementById('screen' + n).classList.remove('hidden');
+    }
+
+    function editRound() {
+      if (scores.length === 0) {
+        alert("No hay rondas para editar todavía");
+        return;
+      }
+      let roundSelector = document.getElementById('roundSelector');
+      let roundSelectorLabel = document.getElementById('roundSelectorLabel');
+      roundSelector.innerHTML = '';
+      roundSelector.style.display = 'inline-block';
+      roundSelectorLabel.style.display = 'inline-block';
+      document.getElementById('roundNumberContainer').style.display = 'none';
+
+      for (let i = 0; i < scores.length; i++) {
+        let hasValues = scores[i] && scores[i].some(score => score !== null && score !== '' && score !== 0);
+        if (hasValues) {
+          let option = document.createElement('option');
+          option.value = i;
+          option.text = `Ronda ${i + 1}`;
+          roundSelector.appendChild(option);
+        }
+      }
+      if (roundSelector.options.length === 0) {
+        alert("No hay rondas con datos para editar");
+        return;
+      }
+      editingRound = parseInt(roundSelector.value);
+      loadRoundData();
+      showScreen(4);
+    }
+
+    function loadRoundData() {
+      let roundSelector = document.getElementById('roundSelector');
+      editingRound = parseInt(roundSelector.value);
+      renderRoundForm(scores[editingRound]);
+    }
+
+    function addRound() {
+      if (isGameOver()) {
+        alert("El juego ha terminado. No se pueden agregar más rondas.");
+        return;
+      }
+      editingRound = scores.length;
+      document.getElementById('roundSelector').style.display = 'none';
+      document.getElementById('roundSelectorLabel').style.display = 'none';
+      document.getElementById('roundNumberContainer').style.display = 'block';
+      document.getElementById('roundNumber').textContent = editingRound + 1;
+      renderRoundForm(Array(numPlayers).fill(''));
+      showScreen(4);
+    }
+
+ function renderRoundForm(values) {
+  let form = document.getElementById('roundForm');
+  form.innerHTML = '';
+  updatePlayersStatus(); // Asegura que los estados estén actualizados
+  
+  for (let i = 0; i < numPlayers; i++) {
+    // Si estamos editando una ronda existente (no agregando nueva), permitir editar todos los jugadores
+    const isEditing = editingRound < scores.length;
+    
+    if (playersStatus[i] === 'lost' && !isEditing) {
+      // Solo deshabilitar si es jugador eliminado Y estamos agregando nueva ronda
+      form.innerHTML += `<div class="form-group">
+        <label>${playerNames[i]} (Fuera)</label>
+        <input type="number" id="score${i}" value="" disabled placeholder="Jugador fuera" />
+      </div>`;
+    } else {
+      form.innerHTML += `<div class="form-group">
+        <label>${playerNames[i]}${playersStatus[i] === 'lost' ? ' (Fuera)' : ''}</label>
+        <input type="number" id="score${i}" value="${values[i] ?? ''}" min="0" />
+      </div>`;
+    }
+  }
+  
+  // Solo números en inputs de puntaje
+  for (let i = 0; i < numPlayers; i++) {
+    const input = document.getElementById(`score${i}`);
+    if (!input.disabled) {
+      input.addEventListener('input', (e) => {
+        e.target.value = e.target.value.replace(/[^0-9]/g, '');
+      });
+    }
+  }
+}
+
+
+    function saveRound() {
+      let roundScores = [];
+      let atLeastOneFilled = false;
+      for (let i = 0; i < numPlayers; i++) {
+        let val = document.getElementById(`score${i}`).value;
+        val = val === "" ? null : parseInt(val, 10);
+        if (val !== null && val !== 0) atLeastOneFilled = true;
+        roundScores.push(val ?? "");
+      }
+      if (!atLeastOneFilled) {
+        alert("Debes ingresar al menos un puntaje para guardar la ronda.");
+        return;
+      }
+      if (!scores.length) scores = [];
+      while (scores.length <= editingRound) {
+        scores.push(Array(numPlayers).fill(null));
+      }
+      scores[editingRound] = roundScores;
+      updatePlayersStatus();
+      saveData();
+      renderScoreboard();
+      updateAddRoundButton();
+      if (isGameOver()) {
+        alert(`¡Juego terminado! El ganador es ${getWinnerName()}`);
+      }
+      showScreen(3);
+    }
+
+    function cancelRound() {
+      showScreen(3);
+    }
+
+    // Puntaje total de un jugador
+    function getTotalScore(playerIndex) {
+      let total = 0;
+      for (let r = 0; r < scores.length; r++) {
+        let val = scores[r][playerIndex];
+        if (val !== null && val !== '') total += parseInt(val) || 0;
+      }
+      return total;
+    }
+
+    // Actualiza el estado de los jugadores
+    function updatePlayersStatus() {
+      for (let i = 0; i < numPlayers; i++) {
+        let total = getTotalScore(i);
+        if (total >= maxPoints) {
+          playersStatus[i] = 'lost';
+        } else {
+          playersStatus[i] = 'active';
+        }
+      }
+    }
+
+    // ¿Solo queda 1 jugador activo?
+    function isGameOver() {
+      let activeCount = playersStatus.filter(s => s === 'active').length;
+      return activeCount <= 1;
+    }
+
+    // Nombre del ganador (único jugador activo)
+    function getWinnerName() {
+      for (let i = 0; i < numPlayers; i++) {
+        if (playersStatus[i] === 'active') {
+          return playerNames[i];
+        }
+      }
+      return null;
+    }
+
+    // Índice(s) del jugador activo con menor puntaje
+    function getIndexesOfLowestActiveScore() {
+      let min = null, indexes = [];
+      for (let i = 0; i < numPlayers; i++) {
+        if (playersStatus[i] === 'active') {
+          let total = getTotalScore(i);
+          if (min === null || total < min) {
+            min = total;
+            indexes = [i];
+          } else if (total === min) {
+            indexes.push(i);
+          }
+        }
+      }
+      return indexes;
+    }
+
+    // Renderiza la tabla de puntuaciones
+    function renderScoreboard() {
+      if (scores.length === 0 || !playerNames.length) {
+        document.getElementById('scoreboard').innerHTML = '<p>No hay puntuaciones todavía.</p>';
+        return;
+      }
+
+      let html = `<table>
+                    <thead>
+                      <tr>
+                        <th>Nombre</th>`;
+      for (let r = 0; r < scores.length; r++) {
+        html += `<th class="col-round-${r + 1}">R${r + 1}</th>`;
+      }
+      html += `<th>Total</th>
+              </tr>
+            </thead>
+            <tbody>`;
+
+      // Jugador activo con menor puntaje
+      let minIndexes = getIndexesOfLowestActiveScore();
+
+      for (let i = 0; i < numPlayers; i++) {
+        let total = getTotalScore(i);
+        let trClass = '';
+        let tdClass = '';
+        if (playersStatus[i] === 'lost') {
+          trClass = 'player-lost';
+          tdClass = 'player-lost';
+        } else if (minIndexes.includes(i)) {
+          trClass = 'player-winner';
+          tdClass = 'player-winner';
+        }
+        html += `<tr class="${trClass}"><td class="${tdClass}">${playerNames[i]}</td>`;
+        for (let r = 0; r < scores.length; r++) {
+          let score = scores[r][i] || 0;
+          html += `<td class="col-round-${r + 1}">${score}</td>`;
+        }
+        html += `<td>${total}</td></tr>`;
+      }
+
+      html += `</tbody></table>`;
+      document.getElementById('scoreboard').innerHTML = html;
+    }
+
+    // Habilitar/deshabilitar botón de agregar ronda
+    function updateAddRoundButton() {
+      const btn = document.getElementById('btnAddRound');
+      if (isGameOver()) {
+        btn.disabled = true;
+        btn.title = 'El juego ha terminado. No se pueden agregar más rondas.';
+      } else {
+        btn.disabled = false;
+        btn.title = '';
+      }
+    }
+
+    window.onload = () => {
+      loadData();
+      if (!numPlayers) {
+        showScreen(0);
+      }
+    };
+
+    // Registrar Service Worker para PWA
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.register('sw.js')
+        .then(() => console.log('Service Worker registrado'))
+        .catch(err => console.error('Error registrando Service Worker:', err));
+    }
+  </script>
 </body>
 </html>
